@@ -8,6 +8,9 @@ yarn-error.log*
 /test/e2e/reports
 selenium-debug.log
 
+# Config file
+src/config/config.js
+
 # Editor directories and files
 .idea
 *.suo

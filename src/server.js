@@ -3,41 +3,16 @@ const cors = require('cors')
 const bodyParser = require('body-parser')
 const Sequelize = require('sequelize')
 const epilogue = require('epilogue')
-const OktaJwtVerifier = require('@okta/jwt-verifier')
-
-const oktaJwtVerifier = new OktaJwtVerifier({
-  clientId: '{yourClientId}',
-  issuer: 'https://{yourOktaDomain}/oauth2/default'
-})
+const http = require('http')
+const config = require('./config/config.js')
 
 let app = express()
+server = http.createServer(app)
 app.use(cors())
 app.use(bodyParser.json())
 
-// verify JWT token middleware
-app.use((req, res, next) => {
-  // require every request to have an authorization header
-  if (!req.headers.authorization) {
-    return next(new Error('Authorization header is required'))
-  }
-  let parts = req.headers.authorization.trim().split(' ')
-  let accessToken = parts.pop()
-  oktaJwtVerifier.verifyAccessToken(accessToken)
-    .then(jwt => {
-      req.user = {
-        uid: jwt.claims.uid,
-        email: jwt.claims.sub
-      }
-      next()
-    })
-    .catch(next) // jwt did not verify!
-})
-
 // For ease of this tutorial, we are going to use SQLite to limit dependencies
-let database = new Sequelize({
-  dialect: 'sqlite',
-  storage: './test.sqlite'
-})
+let database = new Sequelize(config.mysql)
 
 // Define our Post model
 // id, createdAt, and updatedAt are added by sequelize automatically
@@ -60,9 +35,9 @@ let userResource = epilogue.resource({
 
 // Resets the database and launches the express app on :8081
 database
-  .sync({ force: true })
+  .sync()
   .then(() => {
-    app.listen(8081, () => {
-      console.log('listening to port localhost:8081')
+    server.listen(8081, `${config.ip}`,() => {
+      console.log(`listening to port ${config.ip}:8081`)
     })
   })
